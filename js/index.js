@@ -23843,13 +23843,14 @@ var pusher = new _pusherJs2.default('048da0f43d321a34888b', {
 var channel = pusher.subscribe(channelName);
 
 function emitEvent() {
+  localStorage.timestamp = Date.now();
   channel.trigger('client-my_event', {
-    timestamp: Date.now()
+    ev: 'Event'
   });
 }
 
 channel.bind('client-my_event', function (data) {
-  var ts = data.timestamp;
+  var ts = localStorage.timestamp;
   console.log('Ping ' + (ts - Date.now()) + 'ms');
   emitEvent();
 });
