@@ -12,7 +12,6 @@
     "gulp-gh-pages": "^0.5.4",
     "gulp-sass": "^2.1.1",
     "gulp-util": "^3.0.7",
-    "reactify": "^1.1.1",
     "require-dir": "^0.3.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
@@ -48,6 +47,7 @@
     "eslint-plugin-react": "^3.16.1",
     "flux": "^2.1.1",
     "gulp-eslint": "^1.1.1",
+    "keymirror": "^0.1.1",
     "object-assign": "^4.0.1",
     "react": "^0.14.7",
     "react-dom": "^0.14.7"
