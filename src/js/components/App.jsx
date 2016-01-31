@@ -1,28 +1,11 @@
-import React, {PropTypes} from 'react';
-import TaskList from './TaskList.jsx';
+import React, {PropTypes, Component} from 'react';
+import Lobby from './Lobby.jsx';
+import {Locations, Location, Link} from 'react-router-component';
 
-export default React.createClass({
-  propTypes: {
-    tasks: PropTypes.array.isRequired,
-    onAddTask: PropTypes.func.isRequired,
-    onClear: PropTypes.func.isRequired
-  },
-
-  getDefaultProps() {
-    return {
-      tasks: []
-    }
-  },
-
-  render() {
-    let {onAddTask, onClear, tasks} = this.props;
-    return (
-      <div>
-        <h1>Learn Flux</h1>
-        <TaskList tasks={tasks} />
-        <button onClick={onAddTask}>Add New</button>
-        <button onClick={onClear}>Clear List</button>
-      </div>
-    );
+export default class App extends Component{
+  render(){
+    return <Locations hash>
+            <Location path="/lobby(/*)" handler={Lobby} />
+           </Locations>;
   }
-});
+}

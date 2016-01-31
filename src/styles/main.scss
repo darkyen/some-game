@@ -1,15 +1,108 @@
-@import "./normalize.css";
+@import "./normalize";
 
-$primary-color: green;
+$primary-bg: #242424;
+$secondary-bg: #343434;
 
-h1 {
-  color: $primary-color;
+*{
+  box-sizing: border-box;
 }
 
-li.task {
-  list-style-type: none;
+.row{
+  margin-bottom: 10px;
+}
 
-  label {
-    padding: 0 10px;
+.button{
+  text-align: center;
+}
+
+.input,.select, .button{
+  display: block;
+  line-height: 30px;
+  padding: 6px 12px;
+  text-decoration: none;
+  width: 100%;
+  height: 40px;
+  color: $primary-bg;
+  background: #fff;
+  border: 1px solid #000;
+}
+
+hr{
+  border: 0;
+  border-bottom: 1px solid;
+  border-color: $primary-bg;
+}
+
+body{
+  color: #fff;
+  background: $primary-bg;
+  font-family: 'Roboto';
+}
+
+.game-lobby{
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__clients,
+  &__screen,
+  &__create{
+    background: $secondary-bg;
+    width: 320px;
+    padding: 10px;
   }
+
+  &__clients{
+    height: 480px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__client{
+    display: block;
+    padding: 10px;
+    color: #fff;
+    background: $secondary-bg;
+    border-bottom: 1px solid $primary-bg;
+
+    &-name, &-map, &-numbers{
+      margin: 5px 0px;
+    }
+
+    &-map{
+      flex: 1;
+    }
+
+    &-details{
+      display: flex;
+    }
+  }
+
+  &__client-list{
+    border: 1px solid $primary-bg;
+    flex: 1;
+    list-style: none;
+    overflow-y: auto;
+    background: $primary-bg;
+    padding: 0px;
+    margin: 0px;
+  }
+}
+
+.txt-center{
+  text-align: center;
+}
+
+h1, h2, h3,
+h4, h5, h6{
+  font-weight: 100;
+}
+
+a{
+  text-decoration: none;
 }
