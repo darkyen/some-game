@@ -14,7 +14,7 @@ export class DataChannel extends EventEmitter{
     })
   }
 
-  send(..args){
+  send(...args){
     this.__channel.send(...args);
   }
 

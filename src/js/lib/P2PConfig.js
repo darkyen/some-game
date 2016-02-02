@@ -1,30 +1,36 @@
 import {EventEmitter} from 'events';
 import DataChannel from './DataChannel';
-import PeerConnection from './PeerConnection';
+import PeerConnection from 'rtcpeerconnection';
 import {autobind, deprecate} from 'core-decorators';
+const RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+const RTCSessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
 
 // This expects a parameter a communication channel
 // Notably this itself follows the channel interface.
 // The Interface is defined as follows
 @autobind
-export class Peer extends EventEmitter{
+export default {
     // const PeerConnection = webkitRTCPeerConnection;
-    static RTCConfig = {"iceServers":[{"urls": ["stun:stun.l.google.com:19302"] }]};
-    static RTCConstraints = {
+    RTCConfig : {
+      "iceServers":[
+        {"urls": ["stun:stun.l.google.com:19302"] }
+      ]
+    },
+    RTCConstraints : {
         'mandatory': [
           {'DtlsSrtpKeyAgreement': true},
           {'RtpDataChannels': true }
         ]
+    },
+    SDPConstraints : {
+      'mandatory': {
+        'OfferToRecieveAudio': false,
+        'OfferToRecieveVideo': false
+      }
     };
-    // no av required.
-    static SDPConstraints = {
-        {
-          'OfferToRecieveAudio': false,
-          'OfferToRecieveVideo': false
-        }
-    };
-
-
+};
+/*
+if (false){
     constructor(signalTransport, dataChannelConfig){
       super();
       this.config = dataChannelConfig || {
@@ -34,6 +40,8 @@ export class Peer extends EventEmitter{
           ordered: false,
         }
       }
+      this.__initializePeerConnection();
+      this.__initializeDataChannel();
       this.__initializeTransport(signalTransport);
       this.once('error', ()=>{
         this.has_errors = false;
@@ -45,7 +53,6 @@ export class Peer extends EventEmitter{
       this.signalTransport = signalTransport;
       this.signalTransport.on('error', this.__handleSingalTransportError);
       this.signalTransport.on('message', this.__handleSignalTransportMessage);
-      this.signalTransport.on('connect', this.__handleSignalTransportConnected);
       this.signalTransport.on('close', this.__handleSignalTransportClose);
     }
 
@@ -64,21 +71,15 @@ export class Peer extends EventEmitter{
         case 'answer':
           this.__processPeerAnswer(data);
           break;
-        default
+        default:
           throw new Error('Unknown Action');
           break;
       }
     }
 
-    __handleSignalTransportConnected(){
-      this.__initializePeerConnection();
-      this.__initializeDataChannel();
-    }
-
     __handleSignalTransportClose(){
       console.warn("Signal Transport is now closed, nothing to do here");
     }
-
 
     __initializePeerConnection(){
       // Personally I'd override the PeerConnection.prototype.createDataChannel
@@ -127,7 +128,7 @@ export class Peer extends EventEmitter{
     }
 
     __processPeerIce(iceCandidateData){
-      const iceCandidate = new iceCandidate(iceCandidateData);
+      const iceCandidate = new RTCIceCandidate(iceCandidateData);
       this.addIceCandidate(iceCandidate);
     }
 
@@ -161,3 +162,4 @@ export class Peer extends EventEmitter{
       this.dataChannel.close();
     }
 }
+*/

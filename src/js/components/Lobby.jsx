@@ -115,6 +115,7 @@ class LobbyCreate extends Component{
   }
 
   createGame(e){
+    const offer = {...this.state};
     LobbyActions.startAdvertising(this.state);
     return false;
   }

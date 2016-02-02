@@ -19,6 +19,7 @@ Pusher.PrivateChannel.prototype.authorize = function (socketId, callback) {
       return;
     }
 
+    window.profile = profile;
     callback(false, {
       auth: profile.pusherAuth,
     });

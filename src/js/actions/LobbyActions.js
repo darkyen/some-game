@@ -2,6 +2,11 @@ import PusherGameChannel from '../lib/PusherGameChannel';
 import dispatcher from '../Dispatcher';
 import Constants from '../Constants';
 import uuid from 'uuid';
+import GameEngine from '../lib/GameEngine';
+import {
+  openChannelWithServer,
+  openChannelWithClient
+} from '../lib/channelUtils';
 
 let lobbyChannel = null;
 let advertisement = null;
@@ -14,11 +19,18 @@ function closeChannel(){
 
 // Emits it for the store to handle some
 // stuff like finding new peers and stuff.
-function handleMessage({action, payload}){
-  dispatcher.dispatch({
-    payload: payload,
-    action: action,
-  })
+async function handleMessage({action, payload}){
+  switch(action){
+    case Constants.ActionTypes.OFFER_JOIN:
+      const {serverChannel, clientChannel} = payload;
+      const channelId = `private-hs-${serverUUID}-${clientUUID}`;
+      window.channel = await openChannelWithClient(channelId);
+      console.log("Channel Opened with client");
+    break;
+    default:
+      dispatcher.dispatch({action, payload});
+    break;
+  }
 }
 
 function handleConnect(){
@@ -75,11 +87,12 @@ export default {
     closeChannel();
   },
 
+
+  // Creates a server and starts advertising it.
   startAdvertising(gameInfo){
     // Emit an advertisement every 5 seconds
     // with updated game state.
     console.log("Started Advertising");
-    gameInfo.uuid = uuid.v4();
     dispatcher.dispatch({
       action: Constants.ActionTypes.LOBBY_ADVERTISE_START
     });
@@ -112,7 +125,18 @@ export default {
   },
 
   // From here things go slightly hard
-  joinGame(game){
+  async joinGame(serverUUID, clientUUID){
+    // send the channel notification
+    dispatcher.dispatch({
+      action: Constants.ActionTypes.ATTEMPT_JOIN,
+    });
 
+    lobbyChannel.send(Constants.ActionTypes.OFFER_JOIN, {
+      serverUUID, clientUUID
+    });
+
+    const channelId   = `private-hs-${serverUUID}-${clientUUID}`;
+    const gameChannel = await openChannelWithServer(channelId);
+    console.log("Channel opened with server");
   }
 };
