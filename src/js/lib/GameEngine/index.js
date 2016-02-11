@@ -1,4 +1,4 @@
-import P2PServer from '../P2PConnection';
+import P2PServer from '../P2PServer';
 import P2PClient from '../P2PClient';
 import {EventEmitter} from 'events';
 
@@ -87,6 +87,7 @@ export class GameServer extends Game{
   //
   constructor(gameInfo){
     super(gameInfo);
+    const server = new GameServer();
   }
 
   // ServerOnly

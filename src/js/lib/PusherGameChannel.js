@@ -1,56 +1,49 @@
-
 import {EventEmitter} from 'events';
 import {autobind} from 'core-decorators';
-import pusher from './pusher';
+import getDrone from './drone';
 
-export default class PusherGameChannel extends EventEmitter{
-  // Common pusher guy shall do it for now.
-
-  constructor(channelName){
+@autobind
+export default class Room extends EventEmitter{
+  constructor(roomName){
     super();
-    this.channelName = channelName;
-    this.channel = pusher.subscribe(channelName);
-    this.channel.bind(
-      'pusher:subscription_succeeded',
-      this.__subscriptionSuccededHandler
-    );
-
-    this.channel.bind(
-      'pusher:subscription_error',
-      this.__subscriptionErrorHandler
-    );
-
-    this.channel.bind(
-      'client-message',
-      this.__handleMessage
-    );
+    this.roomName = roomName;
+    this.__init__();
   }
 
-  @autobind
-  __handleMessage(message){
-    console.log("Got Message");
-    this.emit('message', message);
+  async __init__(){
+    const drone = await getDrone();
+    this.room = drone.subscribe(roomName);
+    this.room.on('open', this.__handleOpen);
+    this.room.on('data', this.__handleData);
+    this.room.on('error', this.__handleError);
   }
 
-  @autobind
-  __subscriptionSuccededHandler(){
-    this.emit('connect');
+  __handleError(err){
+    this.emit('error', err)
+    this.close();
   }
 
-  @autobind
-  __subscriptionErrorHandler(err){
-    this.emit('error', err);
+  __handleOpen(err){
+    if( err ){
+      this.emit('error', err);
+      return;
+    }
+    this.emit('open');
+  }
+
+  __handleData(message){
+    const {action, payload} = message;
+    this.emit(action, payload);
   }
 
   send(action, payload){
-    this.channel.trigger('client-message', {
-      payload, action
-    });
+    const message = JSON.stringify({action, payload});
+    const room = this.roomName;
+    drone.publish({room, message});
   }
 
   close(){
+    drone.unsubscribe(this.roomName);
     this.emit('close');
-    this.channel.unsubscribe();
   }
-
 }
