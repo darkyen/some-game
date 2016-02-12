@@ -89,6 +89,7 @@ export default class PeerServer extends EventEmitter{
   constructor(){
     super();
     this.uuid = uuid.v4();
+    this.listener = new PusherGameChannel(`srv-${this.uuid}`);
     this.clients = [];
   }
 
@@ -108,6 +109,7 @@ export default class PeerServer extends EventEmitter{
   }
 
   async __handleSignallingMessage({action, payload}){
+    this.emit(action, payload);
   }
 
   async __connect(){

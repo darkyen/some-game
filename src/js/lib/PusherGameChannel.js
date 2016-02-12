@@ -2,6 +2,8 @@ import {EventEmitter} from 'events';
 import {autobind} from 'core-decorators';
 import getDrone from './drone';
 
+// @TODO : Rename this file to ScaleDroneRoom
+
 @autobind
 export default class Room extends EventEmitter{
   constructor(roomName){

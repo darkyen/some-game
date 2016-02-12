@@ -1,6 +1,7 @@
 import P2PServer from '../P2PServer';
 import P2PClient from '../P2PClient';
 import {EventEmitter} from 'events';
+import uuid from 'uuid';
 
 // 45 ticks per seconds
 // Simple player stuff.// Does Game Logic
@@ -9,16 +10,17 @@ export class Game extends EventEmitter{
     static TPS = 45;
     static IDEAL_WAIT = 1000/45;
 
-    constructor(gameInfo){
+    constructor({uuid, maxClients, numClients, name, map}){
       super();
-      this.round      = 0;
-      this.tick       = 0;
+      this.uuid       = uuid || uuid.v4();
       this.players    = new Map();
       this.entities   = new Map();
-      this.maxClients = gameInfo.maxClients;
-      this.numClients = gameInfo.clients;
-      this.name       = gameInfo.name;
-      this.map        = gameInfo.map;
+      this.maxClients = maxClients;
+      this.numClients = clients;
+      this.name       = name;
+      this.map        = map;
+      this.round      = 0;
+      this.tick       = 0;
     }
 
     start(){
@@ -65,6 +67,10 @@ export class Game extends EventEmitter{
 export class GameClient extends Game{
   constructor(gameInfo){
     super(gameInfo);
+
+    // This will setup and ask the
+    // server to respond on a channel
+    this.p2pClient = new P2PClient();
   }
 
   addEvents(){
@@ -87,11 +93,22 @@ export class GameServer extends Game{
   //
   constructor(gameInfo){
     super(gameInfo);
-    const server = new GameServer();
+    // this will create a server channel and
+    // start listening to it.
+    this.p2pServer = new P2PServer(gameInfo.uuid);
+
+    // server.on('authorization', this.handleAuthentication);
+    // server.on('connect', this.addClient);
+  }
+
+  // Make sure we have a
+  // verified game client
+  async handleAuthentication(clientSocket){
+    const jwt = await this.__getJwt(clientSocket);
   }
 
   // ServerOnly
-  addClient(){
+  addClient(clientSocket){
 
   }
 

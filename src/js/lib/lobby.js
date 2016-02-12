@@ -13,6 +13,7 @@ function getLocationAsync(){
 const SERVERLIST_URL = '/we/.json';
 
 function distanceDiff(candidateServer){
+  // More than 4000km hell no!
   return candidateServer.distance > 4000;
 }
 
