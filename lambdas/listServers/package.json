@@ -1,0 +1,11 @@
+{
+  "name": "some-game-lambda-list-servers",
+  "version": "0.0.5",
+  "description": "Lists servers public and community",
+  "main": "index.js",
+  "scripts": {
+    "test": "node-lambda run"
+  },
+  "author": "",
+  "license": "ISC"
+}

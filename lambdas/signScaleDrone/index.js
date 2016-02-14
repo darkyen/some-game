@@ -39,7 +39,7 @@ exports.handler = function (event, context){
     // This looks more like
     // srv-uuid-hostId
     // server hosting this game and is registered to
-    var roomMatchRegExp = "^srv-.*-" + identity.user_id + "$";
+    var roomMatchRegExp = "^srv-.*-" + identity.sub + "$";
     // unidirectional channel
     payload.permissions[roomMatchRegExp] = {
       "publish": false,
@@ -50,14 +50,14 @@ exports.handler = function (event, context){
     // this looks more like
     // temp-conn-gameuuid-serverid-clientid;
 
-    roomMatchRegExp = "^temp-conn-.*-.*" + identity.user_id + "-.*$";
+    roomMatchRegExp = "^temp-conn-.*-.*" + identity.sub + "-.*$";
     payload.permissions[roomMatchRegExp] = {
       "publish": true,
       "subscribe": true
     };
 
   }else{
-    var roomMatchRegExp = "^temp-conn-.*-.*-.*" + identity.user_id + "$";
+    var roomMatchRegExp = "^temp-conn-.*-.*-.*" + identity.sub + "$";
     payload.permissions[roomMatchRegExp] = {
       "publish": true,
       "subscribe": true
@@ -69,7 +69,7 @@ exports.handler = function (event, context){
     algorithm: 'HS256'
   })
 
-  context.succeed(JSON.stringify({
+  context.succeed({
     jwt: generatedJwt
-  }));
+  });
 };

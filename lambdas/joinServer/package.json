@@ -1,0 +1,15 @@
+{
+  "name": "some-game-lambda-join-server",
+  "version": "0.0.5",
+  "description": "Accepts and incoming join game request and emits the scale drone event for the server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dynasty": "^0.2.4",
+    "scaledrone-node-push": "^1.0.0"
+  }
+}
