@@ -2,10 +2,11 @@ import 'whatwg-fetch';
 import uuid from 'uuid';
 import Constants from '../Constants';
 import dispatcher from '../Dispatcher';
-import GameEngine from '../lib/GameEngine';
+import gm from '../lib/GameEngine/gameManager';
 import {openChannelWithPeer} from '../lib/channelUtils';
 import user from '../lib/user';
 import Debug from 'debug';
+import aws4 from 'aws4';
 
 // fbc - firebase client client
 // fbs - firebase server client
@@ -77,6 +78,29 @@ async function getServerList(fbToken){
 
 }
 
+async function tstAmz(amzToken){
+  const credentials = amzToken.Credentials;
+  const URL = 'https://umnusionr5.execute-api.us-east-1.amazonaws.com/prod/Auth0Authenticate';
+  const lCred = {
+    accessKeyId: credentials.AccessKeyId,
+    secretAccessKey: credentials.SecretAccessKey,
+    sessionToken: credentials.SessionToken
+  };
+
+  const opts = {
+    service: 'execute-api',
+    host: 'umnusionr5.execute-api.us-east-1.amazonaws.com',
+    path: '/prod/Auth0Authenticate',
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+  aws4.sign(opts, lCred);
+  return fetch(URL, opts);
+}
+
 export default {
   openLobby(){
     dispatcher.dispatch({
@@ -101,16 +125,19 @@ export default {
 
     lobbyLog("Trying to host");
 
-    const token = await user.getFirebaseToken();
-    const server = gm.startServer(parameters);
-    const gameInfo  = server.gameInfo();
-    const serverAd = await postServerAd(server.gameInfo(), token);
+    // const token = await user.getFirebaseToken();
+    // const amzToken = await user.getLambdaToken();
+    // const k = await tstAmz(amzToken);
+
+    const server = gm.createServer(parameters);
+    // const gameInfo  = server.gameInfo();
+    // const serverAd = await postServerAd(server.gameInfo(), token);
 
     lobbyLog("Posted to server");
 
     dispatcher.dispatch({
       action: Constants.ActionTypes.LOBBY_SERVER_LISTED,
-      server: server
+      // server: server
     });
   },
 

@@ -1,23 +1,18 @@
 import {EventEmitter} from 'events';
 import {autobind} from 'core-decorators';
-import getDrone from './drone';
 
 // @TODO : Rename this file to ScaleDroneRoom
 
 @autobind
 export default class Room extends EventEmitter{
-  constructor(roomName){
+  constructor(drone, roomName){
     super();
     this.roomName = roomName;
-    this.__init__();
-  }
-
-  async __init__(){
-    const drone = await getDrone();
     this.room = drone.subscribe(roomName);
     this.room.on('open', this.__handleOpen);
     this.room.on('data', this.__handleData);
     this.room.on('error', this.__handleError);
+    this.drone = drone;
   }
 
   __handleError(err){

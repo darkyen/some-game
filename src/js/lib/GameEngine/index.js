@@ -1,7 +1,7 @@
 import P2PServer from '../P2PServer';
 import P2PClient from '../P2PClient';
 import {EventEmitter} from 'events';
-import uuid from 'uuid';
+import uuidGen from 'uuid';
 
 // 45 ticks per seconds
 // Simple player stuff.// Does Game Logic
@@ -12,13 +12,13 @@ export class Game extends EventEmitter{
 
     constructor({uuid, maxClients, numClients, name, map}){
       super();
-      this.uuid       = uuid || uuid.v4();
+      this.uuid       = uuid || uuidGen.v4();
       this.players    = new Map();
       this.entities   = new Map();
       this.maxClients = maxClients;
-      this.numClients = clients;
       this.name       = name;
       this.map        = map;
+      this.numClients = 0;
       this.round      = 0;
       this.tick       = 0;
     }
@@ -31,6 +31,7 @@ export class Game extends EventEmitter{
       const time = dt > Game.IDEAL_WAIT ? 0 : IDEAL_WAIT - dt;
       setTimeout(logic, dt);
     }
+
     // Private methods only a deriving class can use.
     __updateClient(clientData){
       this.player.set(clientData.uuid, clientData);
@@ -65,12 +66,13 @@ export class Game extends EventEmitter{
 // Does Game Client handling and
 // handles controls.
 export class GameClient extends Game{
-  constructor(gameInfo){
+  constructor(gameInfo, drone){
     super(gameInfo);
 
     // This will setup and ask the
     // server to respond on a channel
-    this.p2pClient = new P2PClient();
+    this.p2pClient = new P2PClient(gameInfo);
+    this.p2pClient.on('connected', e => this.emit('connected', e));
   }
 
   addEvents(){
@@ -91,12 +93,12 @@ export class GameClient extends Game{
 // Syncs the multiple client stuff
 export class GameServer extends Game{
   //
-  constructor(gameInfo){
+  constructor(gameInfo, drone){
     super(gameInfo);
     // this will create a server channel and
     // start listening to it.
-    this.p2pServer = new P2PServer(gameInfo.uuid);
 
+    this.p2pServer = new P2PServer(gameInfo.uuid, drone);
     // server.on('authorization', this.handleAuthentication);
     // server.on('connect', this.addClient);
   }

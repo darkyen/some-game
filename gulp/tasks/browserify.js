@@ -6,8 +6,13 @@ var browserify = require('browserify');
 var watchify = require('watchify');
 var connect = require('gulp-connect');
 var config = require('../config').browserify;
+var builtins = require('browserify/lib/builtins');
 
 watchify.args.debug = config.debug;
+watchify.args.builtins = Object.assign(builtins, {
+  'querystring': require.resolve('querystring-browser')
+});
+
 var bundler = watchify(browserify(config.src, watchify.args));
 config.settings.transform.forEach(function(t) {
   bundler.transform(t.name, t.opts);

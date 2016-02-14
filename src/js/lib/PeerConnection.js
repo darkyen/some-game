@@ -7,6 +7,7 @@ import {
   DataSDPConstraints,
   AudioSDPConstraints
 } from './P2PConfig';
+import uuid from 'uuid';
 
 function w(...names){
   return names.reduce((ref, name) => ref || window[name], null);
@@ -45,8 +46,13 @@ const defaultConfig = {
 @autobind
 export default class PeerConnection extends EventEmitter{
 
-  constructor(signalTransport, config = {}){
+  constructor(signalTransport, peerDetails, config = {}){
     super();
+    this.uuid = uuid.v4();
+    if( !peerDetails ){
+      throw new Error('PeerConnection cannot be initialized without the peer metadata');
+    }
+    this.peerDetails = peerDetails;
     this.config = Object.assign(defaultConfig, config);
     this.__initializeTransport(signalTransport);
     this.once('error', this.__handleError);
@@ -83,27 +89,24 @@ export default class PeerConnection extends EventEmitter{
   }
 
   __initializePeerConnection(){
-    // Personally I'd override the PeerConnection.prototype.createDataChannel
     const pc = new RTCPeerConnection(RTCConfig, RTCConstraints);
-    if(this.config.channelName){
-      this.__initializeDataChannel(pc.createDataChannel(
-        this.config.channelName,
-        this.config.channelOpts
-      ));
+    if(this.config.isOffering){
+      if(this.config.channelName){
+        this.__initializeDataChannel(pc.createDataChannel(
+          this.config.channelName,
+          this.config.channelOpts
+        ));
+      }
+      pc.on('ice', this.__sendIceCandidate);
+      pc.createOffer(
+        this.__handleLocalOffer,
+        this.__handleError,
+        this.config.SDPConstraints
+      )
     }
-    pc.on('ice', this.__sendIceCandidate);
-    pc.createOffer(
-      this.__handleLocalOffer,
-      this.__handleError,
-      this.config.SDPConstraints
-    )
     this.connection = pc;
   }
 
-  // This is called when a 1:1 signalTransport is connected.
-  // Keep in mind that the connection MUST be 1:1
-  // the API does not handle 1:N or N:N cases, this MUST
-  // be handled by the signalling connection layer.
   __handleDataChannelError(err){
     this.emit('error', err);
   }
@@ -131,7 +134,7 @@ export default class PeerConnection extends EventEmitter{
     this.connection.createAnswer((sdp) => {
       this.connection.setLocalDescription(sdp);
       this.signalTransport.send('answer', sdp);
-    }, null, Peer.SDPConstraints);
+    }, null, this.config.SDPConstraints);
   }
 
   __processPeerAnswer(peerAnswer){

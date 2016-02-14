@@ -1,7 +1,7 @@
 import DataChannel from './DataChannel';
 import PeerConnection from './PeerConnection';
 import uuid from 'uuid';
-import {openChannelWithPeer} from './channelUtils';
+import {openChannel, openChannelWithPeer} from './channelUtils';
 import {autobind} from 'core-decorators';
 import {RTCConfig, RTCConstraints} from './P2PConfig';
 import {EventEmitter} from 'events';
@@ -89,8 +89,9 @@ export default class PeerServer extends EventEmitter{
   constructor(){
     super();
     this.uuid = uuid.v4();
-    this.listener = new PusherGameChannel(`srv-${this.uuid}`);
+    this.listener = openChannel(`srv-${this.uuid}`)
     this.clients = [];
+    this.listener.on('connect', this.__handleConnRequest);
   }
 
   __clientTick(client){
@@ -101,11 +102,20 @@ export default class PeerServer extends EventEmitter{
     this.clients.forEach(this.__clientTick);
   }
 
+  __handleRemoteClose(removedPeer){
+    // Since its removed from this peer
+    // It will not be called in subsequent
+    // ticks.
+    this.clients = this.clients.filter(peer => peer.uuid !== removedPeer.uuid);
+  }
 
-  async __handleConnRequest({connChannelId}){
+  async __handleConnRequest({connChannelId, peerDetails}){
     const tempChannel    = await openChannelWithPeer(connChannelId);
-    const peerConnection = new PeerConnection(tempChannel);
-    peerConnection.on('data-channel', d => this.__handleNewDataChannel(d));
+    const peerConnection = new PeerConnection(tempChannel, peerDetails, {
+      isOffering: false
+    });
+    peerConnection.once('close', this.__handleRemoteClose);
+    this.clients.push(peerConnection);
   }
 
   async __handleSignallingMessage({action, payload}){

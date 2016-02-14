@@ -1,6 +1,7 @@
 import {EventEmitter} from 'events';
 import Debug from 'debug';
-import {autobind} from 'core-decorators';
+import {autobind, deprecate} from 'core-decorators';
+import aws4 from 'aws4';
 
 const authLog = Debug('auth:auth0');
 const userLog = Debug('user:service');
@@ -15,6 +16,11 @@ function loginWithAuth0(details){
     authLog('Attempting login');
     function lockCallback(err, profile, authToken){
       if( err ){
+        if( err.error === 401 ){
+          // Force Login again;
+          sessionStorage.clear();
+          return resolve(loginWithAuth0(details));
+        }
         // Most likely a 404
         authLog('Login failed', err);
         reject(err);
@@ -54,7 +60,7 @@ function getDelegationToken(options){
         if( err ){
           reject(err);
         }
-        resolve(delRes.id_token);
+        resolve(delRes);
       });
     });
 }
@@ -74,6 +80,7 @@ class UserService extends EventEmitter{
   }
 
   // Get Firebase token
+  @deprecate
   async getFirebaseToken(){
     // Check if profile exists
     // if not bail out ... do not wait
@@ -84,7 +91,7 @@ class UserService extends EventEmitter{
     }
 
     // Return the cached token
-    if( this.__fbDelToken){
+    if( this.__fbDelToken ){
       return this.__fbDelToken;
     }
 
@@ -94,9 +101,62 @@ class UserService extends EventEmitter{
       scope: 'openid publicServer'
     };
 
-    const fbDelToken = getDelegationToken(options);
+    const fbDelToken = (await getDelegationToken(options)).id_token;
     this.__fbDelToken = fbDelToken;
     return fbDelToken;
+  }
+
+  async getScaleDroneToken(clientId){
+      userLog('Requesting delegating token for ScaleDrone');
+      if( !this.profile ){
+        userLog('Profile not ready');
+        throw new Error('Profile not ready');
+      }
+
+      // We cannot cache this.
+      const credentials = (await this.getLambdaToken()).Credentials;
+
+      const lCred = {
+        accessKeyId: credentials.AccessKeyId,
+        secretAccessKey: credentials.SecretAccessKey,
+        sessionToken: credentials.SessionToken
+      };
+
+      const URL = 'https://umnusionr5.execute-api.us-east-1.amazonaws.com/prod/delegation/drone';
+      const options = {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'x-identity': this.authToken
+        },
+
+        service: 'execute-api',
+        host: 'umnusionr5.execute-api.us-east-1.amazonaws.com',
+        path: '/prod/delegation/drone',
+        method: 'POST',
+
+        body: JSON.stringify({
+          clientId
+        })
+      };
+
+      aws4.sign(options, lCred);
+      const r = await fetch(URL, options);
+      userLog('Fetch complete');
+
+      if( r.status !== 200 ){
+        userLog('Failed to get the scaledrone token', r);
+        throw new Error('Unauthorized');
+      }
+
+      try{
+        const res = await r.json();
+        userLog('Got the scaledrone token');
+        return JSON.parse(res).jwt;
+      }catch(e){
+        userLog('Invalid response from API, must be json');
+        throw new Error('Internal Server Error');
+      }
   }
 
   // Get token for aws
@@ -107,13 +167,15 @@ class UserService extends EventEmitter{
       throw new Error('Profile not ready');
     }
 
-    if( this.__lambdaToken) {
+    if( this.__lambdaToken ) {
       return this.__lambdaToken;
     }
 
     const options = {
       api: 'aws',
-      scope: 'openid'
+      id_token: this.authToken,
+      role: "arn:aws:iam::141612999557:role/access-to-lambda-per-user",
+      principal: "arn:aws:iam::141612999557:saml-provider/auth0-provider"
     };
 
     const lambdaToken = await getDelegationToken(options);

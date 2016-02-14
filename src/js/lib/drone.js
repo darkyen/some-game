@@ -3,13 +3,14 @@ import user from './user';
 import Debug from 'debug';
 
 const sdLog   = Debug('scaledrone');
-const authLog = Debug('scaledrone:auth:');
+const authLog = Debug('scaledrone:auth');
 
 export default function getDrone(){
   return new Promise((resolve, reject) => {
     const drone = new ScaleDrone('lV7nWpodQNR7ofu2');
 
     async function handleSuccess(){
+      sdLog("Drone connected");
       resolve(drone);
     }
 
@@ -21,11 +22,11 @@ export default function getDrone(){
       sdLog("Drone connecting");
       try{
         sdLog("Drone connecting with client id", drone.clientId);
-        const user = await getUser(drone.clientId);
-        const jwt = user.droneJwt;
+        const jwt = (await user.getScaleDroneToken(drone.clientId));
         drone.authenticate(jwt);
       }catch(e){
         authLog("Failed to get user", e);
+        handleError(new Error('Failed to get scaledrone token'));
       }
     };
 
