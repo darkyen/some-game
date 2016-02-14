@@ -3,63 +3,61 @@ var credentials = {
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 };
 
-var AUTH_0_SECRET = process.env.AUTH_0_SECRET;
-var SCALEDRONE_CHANNEL = process.env.SCALEDRONE_CHANNEL;
-var SCALEDRONE_SECRET  = process.env.SCALEDRONE_SECRET;
 var Dynasty = require('dynasty')(credentials);
 var jwt = require('jsonwebtoken');
-
-
+var uuid = require('uuid');
+var shortid = require('shortid');
 var servers = Dynasty.table('servers');
 
 export.handler = function (event, context){
-  if( !event.identity ){
+  if( !event.headers['x-identity'] ){
     return context.fail(new Error('Unauthorized, no identity provided'));
   }
 
-  if( !event.clientId ){
-    return context.fail(new Error('Bad request'));
+  if( !event.body ){
+    return context.fail(new Error('Bad request, must send map'));
   }
 
-  var identity = {};
-  var clientId = event.clientId;
+  var identity     = {};
+  var idJwt        = event.headers['x-identity'];
+  var serverParams = event.body;
 
-  var payload = {
-    "channel" : SCALEDRONE_CHANNEL,
-    "exp": Date.now() + 180000,
-    "client": clientId,
-    "permissions": {
-
-    }
-  };
 
   try{
-    identity = jwt.verify(event.identity, AUTH_0_SECRET);
+    identity = jwt.verify(idJwt, AUTH_0_SECRET);
   }catch(e){
     return context.fail(new Error('Unauthorized'));
   }
 
-  if( identity.publicServer ){
-    var roomMatchRegExp = "^srv-.*-" + identity.user_id + "$";
-    // unidirectional channel
-    payload.permissions[roomMatchRegExp] = {
-      "publish": false,
-      "subscribe": true
-    };
-  }else{
-    var roomMatchRegExp = "^temp-conn-.*" + identity.user_id + "$";
-    payload.permissions[roomMatchRegExp] = {
-      "publish": true,
-      "subscribe": true
-    };
-  }
+
+  var gameId       = uuid.v4();
+  var shortUrl     = shortid.generate();
+
+  // just return serverDict.public when allowing
+  // others to connect.
+  var serverDict   = {
+    uuid: gameId,
+    isPublicServer : identity.publicServer;
+    publicData: {
+      allowsSpectators: serverParams.allowsSpectators,
+      maxClients: serverParams.maxClients,
+      freeSlots: serverParams.maxClients,
+      name: serverParams.name,
+      map: serverParms.map,
+      isAccepting: true,
+      url: shortUrl
+    },
+    ownerId: identity.sub
+  };
 
 
-  var jwt = jwt.sign(payload, SCALEDRONE_SECRET, {
-    algorithm: 'HS256'
-  })
-
-  context.success(JSON.stringify({
-    jwt: jwt
-  }));
+  // Only public servers will be listed in lobby.
+  // you can join a game by simply doing /servers/<serverId>/join
+  // where uuid is the server short uuid
+  servers.insert(serverDict)
+    .then(function(){
+      context.success(serverDict.publicData);
+    }).error(function(){
+      context.fail(new Error('Internal Server Error'));
+    });
 };

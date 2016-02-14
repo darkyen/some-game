@@ -1,0 +1,17 @@
+{
+  "name": "some-game-lambda-add-server",
+  "version": "0.0.5",
+  "description": "Add a server in the public or community repository",
+  "main": "index.js",
+  "scripts": {
+    "test": "node-lambda run"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dynasty": "^0.2.4",
+    "jsonwebtoken": "^5.5.4",
+    "shortid": "^2.2.4",
+    "uuid": "^2.0.1"
+  }
+}
